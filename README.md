@@ -107,7 +107,7 @@ invoice-qc-service/
 
 ```bash
 # Clone repo:
-git clone https://github.com/<your-github>/invoice-qc-service-
+git clone https://github.com/Rabiyaazami/invoice-qc-service.git
 cd invoice-qc-service
 
 # Create venv
