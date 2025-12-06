@@ -10,8 +10,8 @@ A realistic **Invoice Extraction & Quality Control (QC) service** that:
 
 ## 📌 Features
 
-| Feature | Status |
-|---------|--------|
+| Feature |
+|---------|
 | PDF → JSON extraction (regex + heuristics) 
 | Pydantic schema 
 | Validation engine (business rules) 
