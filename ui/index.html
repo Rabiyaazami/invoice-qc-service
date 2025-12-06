@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Invoice QC Console</title>
+
+<style>
+    /* 🌟 Modern Dashboard Look */
+    body {
+        font-family: "Segoe UI", Roboto, Arial, sans-serif;
+        background: #f5f7fb;
+        margin: 0;
+        padding: 25px;
+    }
+    h1 {
+        color: #0066ff;
+        font-size: 32px;
+        font-weight: 700;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    h1::before {
+        content: "📄";
+        font-size: 30px;
+    }
+
+    /* 🧱 Upload Card */
+    .box {
+        background: #ffffff;
+        padding: 25px;
+        border-radius: 10px;
+        border: 1px solid #d8deea;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        width: 96%;
+        margin-bottom: 20px;
+        animation: fadeIn .4s ease-in-out;
+    }
+    .box h3 {
+        margin-top: 0;
+        font-weight: 600;
+        color: #333;
+    }
+
+    /* 🎨 Custom File Upload */
+    .file-upload {
+        display: inline-block;
+        padding: 10px 14px;
+        border-radius: 6px;
+        background: #eef4ff;
+        border: 1px solid #b9c7e6;
+        font-weight: 600;
+        color: #005ec4;
+        cursor: pointer;
+        transition: 0.2s;
+        font-size: 14px;
+    }
+    .file-upload:hover {
+        background: #d9e7ff;
+        border-color: #7ea5ff;
+    }
+    #pdfs {
+        display: none; /* hides default ugly input */
+    }
+
+    /* 🎛️ Buttons */
+    button {
+        background-color: #007aff;
+        color: white;
+        padding: 10px 16px;
+        border: none;
+        border-radius: 6px;
+        font-size: 15px;
+        cursor: pointer;
+        transition: 0.2s;
+        font-weight: 600;
+        margin-top: 12px;
+    }
+    button:hover {
+        background-color: #005ec4;
+        transform: translateY(-2px);
+    }
+
+    /* 🧮 Summary */
+    #summary {
+        font-size: 16px;
+        margin-bottom: 15px;
+        font-weight: 600;
+    }
+
+    /* 📊 Table Styling */
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        overflow: hidden;
+        border-radius: 8px;
+        margin-top: 10px;
+    }
+    th {
+        background: #e9efff;
+        padding: 12px;
+        font-weight: 600;
+        text-align: left;
+        border-bottom: 2px solid #d0d8ef;
+    }
+    td {
+        padding: 12px;
+        border-bottom: 1px solid #e5e9f3;
+        font-size: 14px;
+    }
+
+    /* 🏷️ Badges */
+    .valid {
+        background: #d2ffe3 !important;
+        color: #0b7c20;
+        font-weight: 600;
+    }
+    .invalid {
+        background: #ffe1e1 !important;
+        color: #a30000;
+        font-weight: 600;
+    }
+
+    /* ✨ Fade in animation */
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(5px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* 📌 Selected File Text */
+    #file-list {
+        margin-top: 8px;
+        font-size: 14px;
+        color: #555;
+    }
+</style>
+</head>
+
+<body>
+
+<h1>Invoice QC Console</h1>
+
+<div class="box">
+    <h3>📤 Upload Invoice PDFs</h3>
+
+    <!-- Styled upload button -->
+    <label class="file-upload" for="pdfs">📂 Choose PDFs</label>
+    <input type="file" id="pdfs" accept=".pdf" multiple>
+
+    <!-- Selected file names appear here -->
+    <div id="file-list"></div>
+
+    <button onclick="uploadPDFs()">🚀 Extract & Validate</button>
+</div>
+
+<div class="box" id="results" style="display:none;">
+    <h3>📌 QC Results</h3>
+    <div id="summary"></div>
+    <table id="resultTable"></table>
+</div>
+
+<script>
+/* 📝 Show selected file names */
+document.getElementById("pdfs").addEventListener("change", () => {
+    const files = document.getElementById("pdfs").files;
+    const names = Array.from(files).map(f => f.name).join(", ");
+    document.getElementById("file-list").innerText = files.length ? `📎 Selected: ${names}` : "";
+});
+
+async function uploadPDFs() {
+    const files = document.getElementById("pdfs").files;
+    if (!files.length) return alert("⚠ Please select PDF files!");
+
+    const formData = new FormData();
+    for (let file of files) formData.append("pdfs", file);
+
+    const res = await fetch("http://127.0.0.1:8000/extract-and-validate-pdfs", {
+        method: "POST",
+        body: formData
+    });
+
+    const data = await res.json();
+    displayResults(data);
+}
+
+function displayResults(data) {
+    document.getElementById("results").style.display = "block";
+    document.getElementById("summary").innerHTML = `
+        📦 <b>Total:</b> ${data.total_invoices} |
+        ✔ <b>Valid:</b> ${data.valid_invoices} |
+        ❌ <b>Invalid:</b> ${data.invalid_invoices}
+    `;
+
+    const table = document.getElementById("resultTable");
+    table.innerHTML = `
+    <tr>
+        <th>Invoice ID</th>
+        <th>Status</th>
+        <th>Errors</th>
+    </tr>`;
+
+    data.invoices.forEach(inv => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+            <td>${inv.invoice_id}</td>
+            <td class="${inv.is_valid ? "valid" : "invalid"}">
+                ${inv.is_valid ? "✔ Valid" : "❌ Invalid"}
+            </td>
+            <td>${inv.errors.join(", ") || "—"}</td>
+        `;
+        table.appendChild(row);
+    });
+}
+</script>
+
+</body>
+</html>

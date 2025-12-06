@@ -1,0 +1,6 @@
+pdfplumber
+fastapi
+uvicorn
+pydantic
+python-dateutil
+typer

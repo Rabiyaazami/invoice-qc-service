@@ -1,0 +1,22 @@
+# Ignore Virtual Environment
+venv/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# IDE / Editor files
+.vscode/
+.idea/
+
+# Output Artifacts
+output/
+*.log
+
+# Local files
+*.pdf
+!pdfs/sample*
+
+# OS files
+.DS_Store
+Thumbs.db
